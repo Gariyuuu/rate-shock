@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rate Shock — How Fed policy surprises propagate across markets</title>
+<meta name="description" content="Event study of 215 FOMC announcements: how expectation-adjusted Federal Reserve policy surprises propagate across US equity sectors, Treasuries and gold.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📉</text></svg>">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#fbfbfa; --panel:#fff; --ink:#14140f; --ink2:#4a483f; --dim:#7c7a70;
+  --rule:#e2e0d9; --rule2:#eceae4; --accent:#1c4f8f; --neg:#a3352f; --pos:#1c5c3a;
+  --serif: "Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+  --mono: ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--serif);font-size:18px;line-height:1.62;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+.col{max-width:680px}
+p{margin:0 0 1.05em}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid #c3d2e6}
+a:hover{border-bottom-color:var(--accent)}
+h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.012em;margin:0}
+.eyebrow{font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--dim);margin:0 0 18px}
+
+/* header */
+header{border-bottom:1px solid var(--rule);padding:76px 0 54px;background:var(--panel)}
+h1{font-size:clamp(40px,6.4vw,64px);line-height:1.04;margin:0 0 20px}
+.lede{font-size:clamp(20px,2.5vw,24px);line-height:1.45;color:var(--ink2);
+  max-width:730px;margin:0 0 26px}
+.byline{font-family:var(--sans);font-size:13.5px;color:var(--dim);
+  display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.byline a{border:0;color:var(--ink2);font-weight:500}
+.byline a:hover{color:var(--accent)}
+
+/* key figures strip */
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  background:var(--panel);margin:0}
+.key{padding:24px 26px;border-right:1px solid var(--rule2)}
+.key:last-child{border-right:0}
+.key .v{font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.1;
+  font-variant-numeric:tabular-nums}
+.key .k{font-family:var(--sans);font-size:11.5px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--dim);margin-top:7px;line-height:1.35}
+
+section{padding:60px 0;border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:0}
+h2{font-size:clamp(26px,3.4vw,33px);margin:0 0 8px;line-height:1.18}
+.sub{font-family:var(--sans);font-size:14.5px;color:var(--dim);margin:0 0 30px}
+h3{font-size:19px;margin:34px 0 9px}
+
+figure{margin:34px 0 0}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--rule);
+  background:#fcfcfb}
+figcaption{font-family:var(--sans);font-size:13px;color:var(--dim);
+  margin-top:11px;line-height:1.5;max-width:760px}
+.hero-fig{margin-top:8px}
+
+table{width:100%;border-collapse:collapse;margin:26px 0 0;
+  font-family:var(--sans);font-size:14px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;font-size:11.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--dim);padding:0 12px 9px 0;
+  border-bottom:1px solid var(--ink)}
+td{padding:9px 12px 9px 0;border-bottom:1px solid var(--rule2);vertical-align:baseline}
+td.num,th.num{text-align:right;padding-right:0}
+th.num{padding-right:0}
+.tk .sym{font-family:var(--mono);font-size:13px;font-weight:600}
+.tk .nm{color:var(--dim);font-size:13px}
+.strong{font-weight:600}
+.dim{color:var(--dim)}
+tr.sig td{background:#f4f7fb}
+tr.sig .strong{color:var(--accent)}
+.tnote{font-family:var(--sans);font-size:12.5px;color:var(--dim);margin-top:12px;line-height:1.55}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.scrollhint{display:none;font-family:var(--sans);font-size:12px;color:var(--dim);
+  margin:20px 0 -14px;letter-spacing:.04em}
+
+.callout{border-left:2px solid var(--ink);padding:4px 0 4px 22px;margin:30px 0;
+  max-width:690px}
+.callout p:last-child{margin-bottom:0}
+.callout .lbl{font-family:var(--sans);font-size:11.5px;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
+  display:block;margin-bottom:7px}
+
+ul{margin:0 0 1.05em;padding-left:1.15em;max-width:690px}
+li{margin-bottom:.5em}
+li::marker{color:var(--dim)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:34px 46px;margin-top:30px}
+.finding{max-width:none}
+.finding h3{margin-top:0}
+.finding p{font-size:16.5px;line-height:1.55;margin-bottom:0}
+
+code,kbd{font-family:var(--mono);font-size:.88em;background:#f1efe9;
+  padding:1.5px 5px;border-radius:3px}
+pre{background:#14140f;color:#eceae4;padding:20px 22px;border-radius:5px;
+  overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.65;
+  max-width:760px}
+pre code{background:0;padding:0;color:inherit;font-size:inherit}
+
+footer{padding:54px 0 76px;font-family:var(--sans);font-size:14px;color:var(--dim);
+  background:var(--panel);border-top:1px solid var(--rule)}
+footer a{color:var(--ink2)}
+.cite{font-size:14px;color:var(--dim);border-left:2px solid var(--rule);
+  padding-left:18px;margin-top:22px;max-width:690px;line-height:1.55}
+
+@media (max-width:880px){
+  .keys{grid-template-columns:1fr 1fr}
+  .key{border-bottom:1px solid var(--rule2)}
+  .key:nth-child(2){border-right:0}
+  .grid2{grid-template-columns:1fr;gap:26px}
+}
+@media (max-width:600px){
+  body{font-size:17px}
+  .wrap{padding:0 20px}
+  header{padding:52px 0 40px}
+  section{padding:44px 0}
+  .key{padding:18px 20px}
+  .key .v{font-size:25px}
+  table{font-size:13px}
+  td,th{padding-right:8px;white-space:nowrap}
+  .tk{white-space:normal}
+  /* Let the table keep its natural width and scroll, rather than squeezing
+     numeric cells onto two lines and clipping the right-hand columns. */
+  .scroll table{min-width:600px}
+  .scrollhint{display:block}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">Empirical finance · Event study</p>
+    <h1>Rate Shock</h1>
+    <p class="lede">Which assets react most strongly when the Federal Reserve
+      surprises the market?</p>
+    <p class="byline">
+      <span>215 FOMC announcements · 1998-12-22 to 2023-12-13</span>
+      <a href="https://github.com/Gariyuuu/rate-shock">Source &amp; data →</a>
+      <a href="https://github.com/Gariyuuu/rate-shock/blob/main/report/REPORT.md">Full report →</a>
+    </p>
+  </div>
+</header>
+
+<div class="keys">
+  <div class="key"><div class="v">−1.77%</div>
+    <div class="k">S&amp;P 500 response<br>per +25bp hawkish surprise</div></div>
+  <div class="key"><div class="v">−1.07%</div>
+    <div class="k">7–10y Treasuries<br>clearest response in sample</div></div>
+  <div class="key"><div class="v">0</div>
+    <div class="k">Equity sectors significant<br>at the 5% level</div></div>
+  <div class="key"><div class="v">0.47</div>
+    <div class="k">Correlation between rate change<br>and actual surprise</div></div>
+</div>
+
+<main>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow">Research question</p>
+      <h2>How do unexpected Fed announcements move equity sectors?</h2>
+      <p class="sub">And does that sensitivity change when inflation is high?</p>
+      <p>Markets price expectations. If the FOMC delivers exactly the hike that
+        futures already implied, the discount rate embedded in valuations does
+        not move — and neither should equities. The explanatory variable in this
+        study is therefore not the change in the fed funds target but the
+        <strong>expectation-adjusted policy surprise</strong>.</p>
+      <p>I use the Bauer &amp; Swanson (2023) measure published by the Federal
+        Reserve Bank of San Francisco: the first principal component of
+        30-minute moves in Eurodollar and SOFR futures around each announcement.
+        The window is narrow enough that essentially no other macroeconomic news
+        enters it, which is what buys the identification. Sector responses are
+        SPY-adjusted abnormal returns over a [0,+1] trading-day window;
+        Treasuries and gold enter on a raw-return basis.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow">The identification point</p>
+      <h2>A rate change is not a rate surprise</h2>
+      <p class="sub">The distinction is not a technicality in this sample.</p>
+      <p>Of the 215 announcements studied,
+        <strong>144 involved no change in the fed funds target at all</strong> —
+        yet those meetings still carry surprises with a standard deviation of
+        4.0bp, because the FOMC moved expectations through guidance rather than
+        through the current-period rate.</p>
+      <p>Across the full sample, the realized target change and the measured
+        surprise correlate only <strong>0.467</strong>.
+        A design keyed on the realized change would discard most of the usable
+        variation and mismeasure the rest.</p>
+      <div class="callout">
+        <span class="lbl">Sign convention</span>
+        <p>A positive surprise means futures-implied rates repriced
+          <em>upward</em>: policy was tighter than expected. This is verified
+          rather than assumed — regressing the 30-minute 10-year Treasury yield
+          response on the surprise gives a slope of +0.44 (t = 7.0).</p>
+      </div>
+    </div>
+    <figure>
+      <img src="figures/02_surprise_distribution.png"
+           alt="Left: histogram of policy surprises, centred near zero with a standard deviation of about 6 basis points. Right: scatter of the surprise against the realized target change, showing only a moderate relationship.">
+      <figcaption>Surprises are centred near zero and small — a standard
+        deviation of 5.9bp. The right panel shows why the realized target change
+        is a poor proxy: the two are only moderately correlated.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Main results</p>
+    <h2>Sector sensitivity to monetary policy surprises</h2>
+    <p class="sub">Return response per +25bp tighter-than-expected surprise, with
+      95% confidence intervals.</p>
+    <figure class="hero-fig">
+      <img src="figures/03_sector_beta_forest.png"
+           alt="Forest plot of estimated return responses per 25 basis point hawkish surprise for ten sector ETFs, two benchmarks and three cross-assets, each with a 95% confidence interval. Only SPY and IEF have intervals excluding zero.">
+      <figcaption>Filled points are significant at the 5% level; hollow points
+        are not. Sectors are measured against SPY; SPY, IEF, TLT and GLD use raw
+        returns, because subtracting an equity benchmark from a bond return is
+        not an abnormal return.</figcaption>
+    </figure>
+    <p class="scrollhint">Table scrolls horizontally →</p>
+    <div class="scroll">
+    <table>
+      <thead><tr>
+        <th>Asset</th><th class="num">β per +25bp</th><th class="num">95% CI</th>
+        <th class="num">p</th><th class="num">Bootstrap p</th><th class="num">n</th>
+        <th class="num">Basis</th>
+      </tr></thead>
+      <tbody>
+<tr class="sig">
+      <td class="tk"><span class="sym">SPY</span> <span class="nm">S&P 500</span></td>
+      <td class="num strong">−1.77</td>
+      <td class="num">[−3.38, −0.16]</td>
+      <td class="num">0.031</td>
+      <td class="num">0.076</td>
+      <td class="num dim">214</td>
+      <td class="num dim">raw</td>
+    </tr>
+<tr class="sig">
+      <td class="tk"><span class="sym">IEF</span> <span class="nm">7-10y Treasuries</span></td>
+      <td class="num strong">−1.07</td>
+      <td class="num">[−1.68, −0.46]</td>
+      <td class="num">&lt;0.001</td>
+      <td class="num">0.003</td>
+      <td class="num dim">183</td>
+      <td class="num dim">raw</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">TLT</span> <span class="nm">20y+ Treasuries</span></td>
+      <td class="num strong">−1.31</td>
+      <td class="num">[−2.73, +0.10]</td>
+      <td class="num">0.069</td>
+      <td class="num">0.104</td>
+      <td class="num dim">183</td>
+      <td class="num dim">raw</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">GLD</span> <span class="nm">Gold</span></td>
+      <td class="num strong">−1.75</td>
+      <td class="num">[−3.50, +0.01]</td>
+      <td class="num">0.051</td>
+      <td class="num">0.079</td>
+      <td class="num dim">164</td>
+      <td class="num dim">raw</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">QQQ</span> <span class="nm">Nasdaq 100</span></td>
+      <td class="num strong">−1.52</td>
+      <td class="num">[−3.47, +0.42]</td>
+      <td class="num">0.126</td>
+      <td class="num">0.184</td>
+      <td class="num dim">212</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">XLK</span> <span class="nm">Technology</span></td>
+      <td class="num strong">−1.31</td>
+      <td class="num">[−3.27, +0.64]</td>
+      <td class="num">0.188</td>
+      <td class="num">0.316</td>
+      <td class="num dim">213</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">XLY</span> <span class="nm">Consumer Discretionary</span></td>
+      <td class="num strong">−0.95</td>
+      <td class="num">[−1.92, +0.01]</td>
+      <td class="num">0.053</td>
+      <td class="num">0.067</td>
+      <td class="num dim">213</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">XLB</span> <span class="nm">Materials</span></td>
+      <td class="num strong">−0.78</td>
+      <td class="num">[−1.80, +0.24]</td>
+      <td class="num">0.136</td>
+      <td class="num">0.180</td>
+      <td class="num dim">213</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">XLF</span> <span class="nm">Financials</span></td>
+      <td class="num strong">−0.29</td>
+      <td class="num">[−1.59, +1.00]</td>
+      <td class="num">0.654</td>
+      <td class="num">0.725</td>
+      <td class="num dim">213</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">XLI</span> <span class="nm">Industrials</span></td>
+      <td class="num strong">−0.29</td>
+      <td class="num">[−0.80, +0.22]</td>
+      <td class="num">0.266</td>
+      <td class="num">0.279</td>
+      <td class="num dim">213</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">XLV</span> <span class="nm">Health Care</span></td>
+      <td class="num strong">+0.46</td>
+      <td class="num">[−0.47, +1.39]</td>
+      <td class="num">0.328</td>
+      <td class="num">0.352</td>
+      <td class="num dim">213</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">XLRE</span> <span class="nm">Real Estate</span></td>
+      <td class="num strong">+0.61</td>
+      <td class="num">[−2.49, +3.71]</td>
+      <td class="num">0.701</td>
+      <td class="num">0.807</td>
+      <td class="num dim">72</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">XLU</span> <span class="nm">Utilities</span></td>
+      <td class="num strong">+0.63</td>
+      <td class="num">[−1.24, +2.51]</td>
+      <td class="num">0.508</td>
+      <td class="num">0.554</td>
+      <td class="num dim">213</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">XLE</span> <span class="nm">Energy</span></td>
+      <td class="num strong">+1.06</td>
+      <td class="num">[−0.89, +3.01]</td>
+      <td class="num">0.286</td>
+      <td class="num">0.350</td>
+      <td class="num dim">213</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+<tr class="">
+      <td class="tk"><span class="sym">XLP</span> <span class="nm">Consumer Staples</span></td>
+      <td class="num strong">+1.13</td>
+      <td class="num">[−0.80, +3.06]</td>
+      <td class="num">0.252</td>
+      <td class="num">0.276</td>
+      <td class="num dim">213</td>
+      <td class="num dim">vs SPY</td>
+    </tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="tnote">Shaded rows are significant at the 5% level.
+      HC1 robust standard errors; bootstrap column is a Rademacher wild
+      bootstrap imposing the null. XLRE has only 72 usable
+      events and should be treated as uninformative.</p>
+
+    <div class="grid2">
+      <div class="finding">
+        <h3>The broad market response is large</h3>
+        <p>A +25bp hawkish surprise moves the S&amp;P 500 by
+          −1.77% (p&nbsp;=&nbsp;0.031).
+          This is the headline effect and it is well identified.</p>
+      </div>
+      <div class="finding">
+        <h3>Treasuries give the cleanest signal</h3>
+        <p>IEF returns −1.07% per +25bp
+          (p&nbsp;&lt;&nbsp;0.001, bootstrap
+          p&nbsp;=&nbsp;0.003) — the
+          best-identified coefficient in the study, as a near-mechanical
+          duration effect should be.</p>
+      </div>
+      <div class="finding">
+        <h3>No single sector clears 5%</h3>
+        <p>The ordering is economically sensible — Technology and Consumer
+          Discretionary at the sensitive end, Staples and Energy at the
+          defensive end — but the smallest sector p-value is
+          0.053. The cross-section is suggestive, not established.</p>
+      </div>
+      <div class="finding">
+        <h3>Pooling recovers the cyclical effect</h3>
+        <p>A pooled test of cyclicals (XLY, XLI, XLB) with event-clustered
+          errors gives −0.67%
+          (p&nbsp;=&nbsp;0.029) — more power than any single-asset
+          regression.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow">Cross-asset</p>
+      <h2>Equity sectors rotate; they do not track bonds</h2>
+      <p class="sub">Correlation of event responses across 215 announcements.</p>
+      <p>The striking feature is how <em>weak</em> the bond–equity links are.
+        Sector responses correlate strongly with each other — Technology against
+        Staples at −0.62, Utilities against Staples at +0.66 — but barely at all
+        with Treasuries (|r| ≤ 0.32). Around FOMC announcements the dominant axis
+        of equity variation is cyclical-versus-defensive rotation, not shared
+        duration exposure with bonds.</p>
+      <p>Consumer Discretionary is the exception, and the clustering agrees: it
+        is the one equity sector that groups with the two Treasury funds rather
+        than with the defensives. Real Estate — the sector whose textbook
+        duration story is strongest — is absent from the clustering entirely,
+        because its 72-event history is too short to include.</p>
+    </div>
+    <figure>
+      <img src="figures/07_treasury_equity_scatter.png"
+           alt="Three scatter plots of long-Treasury event responses against Technology, Utilities and Financials responses, each showing a weak relationship.">
+      <figcaption>Long-Treasury responses plotted against three sector
+        responses. The relationships are weak in every panel.</figcaption>
+    </figure>
+    <figure>
+      <img src="figures/09_dendrogram.png"
+           alt="Hierarchical clustering dendrogram grouping assets by correlation of their FOMC event responses; IEF and TLT merge first, then Consumer Discretionary joins them.">
+      <figcaption>Hierarchical clustering on correlation distance. The Treasury
+        pair merges first; Consumer Discretionary joins them before any other
+        equity sector. Exploratory — no causal claim is made from this.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow">Inflation regime</p>
+      <h2>Does high inflation amplify rate sensitivity?</h2>
+      <p class="sub">Pre-registered prediction: yes. The data say otherwise.</p>
+      <p>At each announcement I attach the most recently <em>released</em> CPI
+        report — joined by an as-of merge on timestamps against 390 real BLS
+        release dates, so no CPI published after the meeting can leak into the
+        regime flag. High inflation is headline CPI YoY ≥ 3%, giving
+        62 high- and 153 low-inflation events
+        spanning 2000–2008, 2011 and 2021–2023 — a genuine regime variable, not
+        a disguised 2022 dummy.</p>
+      <p><strong>The amplification hypothesis is not supported for equities.</strong>
+        Every sector-level interaction is insignificant. The pre-registered prior
+        was wrong, and it is reported as wrong.</p>
+      <div class="callout">
+        <span class="lbl">The one robust regime effect</span>
+        <p><strong>Gold</strong> responds strongly negatively to hawkish
+          surprises when inflation is low (−3.44%)
+          and roughly not at all when inflation is high
+          (+0.75%). That interaction keeps its
+          sign across all five inflation thresholds tested
+          (2.99 to 4.59) —
+          consistent with inflation-hedge demand offsetting the real-rate
+          channel.</p>
+      </div>
+      <div class="callout">
+        <span class="lbl">What did not survive</span>
+        <p>Consumer Discretionary looks like amplification at the 3% threshold
+          (−2.13, p&nbsp;=&nbsp;0.056) but
+          <strong>reverses sign</strong> at a 2% threshold
+          (+0.38). It is specification-sensitive and is
+          not promoted to a finding.</p>
+      </div>
+    </div>
+    <figure>
+      <img src="figures/05_regime_betas.png"
+           alt="Dot plot comparing each sector's estimated rate sensitivity in low-inflation versus high-inflation regimes, with the difference annotated; no difference is statistically significant.">
+      <figcaption>Sector sensitivity by regime. No interaction reaches
+        significance, even before correcting for testing fifteen assets.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow">Robustness</p>
+      <h2>2,886 estimates, none discarded</h2>
+      <p class="sub">8 sample filters × 4 windows × 2 shock measures × 3 return
+        definitions, plus 465 interaction estimates across 5 inflation
+        thresholds.</p>
+      <p>Every specification run is persisted to
+        <code>results/tables/</code>, including the ones that disagree with the
+        headline. What holds across the entire battery: IEF's sign and magnitude
+        are essentially invariant, and
+        GLD, QQQ, TLT, XLB, XLI, XLV never change
+        sign either.</p>
+      <p>What does not: <strong>7 of
+        10 sector betas are not sign-stable.</strong> Utilities
+        alone spans −2.44 to +1.96. The instability is concentrated in one
+        place — under the six exclusion-type filters only
+        XLE, XLRE, XLU flip, but splitting the sample
+        pre/post-2008 additionally flips
+        SPY, XLF, XLK, XLP, XLY. The zero-lower-bound era is a
+        genuinely different monetary regime, and the cross-section does not
+        survive it. That is reported here rather than buried, because it is the
+        main reason the cross-sectional result is framed as suggestive.</p>
+    </div>
+    <figure>
+      <img src="figures/10_robustness.png"
+           alt="Dot plot showing each sector's estimated beta across eight alternative sample definitions, with the baseline highlighted; several sectors span both positive and negative values.">
+      <figcaption>Each blue dot is one alternative sample definition — excluding
+        emergency meetings, March 2020, the COVID period, the largest surprise,
+        and pre/post-2008 splits.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow">Methodology</p>
+      <h2>Design</h2>
+      <ul>
+        <li><strong>Sample.</strong> 215 FOMC announcements,
+          1998-12-22 to 2023-12-13, 15
+          unscheduled. <strong>Every date validated</strong> against the Federal
+          Reserve's own announcement history — 207 by statement URL, 5 by
+          minutes, 3 unscheduled confirmed by press-release title. Zero
+          unvalidated.</li>
+        <li><strong>Shock.</strong> Bauer–Swanson MPS, first principal component
+          of 30-minute changes in ED1–ED4 Eurodollar futures (SOFR from 2023),
+          converted to basis points. The orthogonalized variant is reported
+          throughout as a co-primary specification.</li>
+        <li><strong>Windows.</strong> [−5,+5], [−1,+1], <strong>[0,+1]</strong>
+          (pre-registered baseline) and [0,+5]. Daily and intraday estimates are
+          reported as separate coefficients, never mixed.</li>
+        <li><strong>Abnormal return.</strong> <em>AR = R<sub>sector</sub> −
+          R<sub>SPY</sub></em> for sectors; raw returns for SPY, IEF, TLT and
+          GLD.</li>
+        <li><strong>Inference.</strong> HC1 robust standard errors; HC0/HC3 and
+          a wild bootstrap in the robustness battery. Betas reported per
+          +25bp.</li>
+      </ul>
+      <h3>Pre-registration</h3>
+      <p>Directional hypotheses were committed to git <em>before</em> any
+        regression was estimated, and the file has not been edited since.
+        Three of six directional priors — Financials, Utilities and Real Estate —
+        came out with the <strong>wrong sign</strong>. They were not rewritten.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow">Limitations</p>
+      <h2>What this study cannot claim</h2>
+      <ul>
+        <li>The <strong>surprise dataset ends 2023-12-13</strong>, the
+          limit of the published Bauer–Swanson update. Nothing here speaks to
+          policy after that date.</li>
+        <li><strong>Statistical power is the binding constraint.</strong>
+          215 events with a 5.9bp surprise standard deviation leaves
+          sector confidence intervals ±2–3 percentage points wide. The FOMC
+          meets eight times a year; no econometric choice relaxes this.</li>
+        <li><strong>High-frequency analysis is limited</strong> to the 30-minute
+          measurements that ship with the Bauer–Swanson dataset. No sector-level
+          intraday data was available, so wider intraday windows could not be
+          constructed.</li>
+        <li><strong>Longer windows admit more unrelated news.</strong> For an
+          identical shock and asset, R² falls from 0.25 in a 30-minute window to
+          0.09 over two days. Wider windows give larger point estimates but
+          weaker identification.</li>
+        <li><strong>XLRE has only 72 usable events</strong>
+          (it launched in October 2015), is unstable under every perturbation,
+          and is excluded from the PCA and clustering.</li>
+        <li><strong>Many sector coefficients are specification-sensitive</strong>
+          — 7 of 10 change sign across the
+          full robustness battery, mostly driven by the pre/post-2008
+          sub-period split.</li>
+        <li><strong>These are event-study associations, not structural causal
+          estimates.</strong> The design identifies price responses to policy
+          news in a 1–2 day window. It says nothing about the real economy,
+          longer-horizon returns, or sector fundamentals.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="col">
+      <p class="eyebrow">Reproducibility</p>
+      <h2>One command regenerates everything</h2>
+      <p>The research pipeline is plain Python and runs locally. This page is a
+        static artifact built from its output — no analysis runs in the browser
+        or on the server.</p>
+<pre><code>git clone git@github.com:Gariyuuu/rate-shock.git
+cd rate-shock
+python3.11 -m venv .venv
+./.venv/bin/pip install -r requirements.txt
+
+./.venv/bin/python scripts/run_analysis.py   # tables + figures
+./.venv/bin/python -m pytest tests/ -q       # 70 tests</code></pre>
+      <p>Deleting <code>results/</code> and re-running regenerates all 19
+        CSV/JSON artifacts <strong>byte-for-byte identically</strong>.
+        <code>tests/test_frozen_results.py</code> pins the headline estimates so
+        a future refactor cannot silently move a conclusion.</p>
+      <p><a href="https://github.com/Gariyuuu/rate-shock">Repository on GitHub →</a><br>
+         <a href="https://github.com/Gariyuuu/rate-shock/blob/main/report/REPORT.md">Full empirical report →</a><br>
+         <a href="https://github.com/Gariyuuu/rate-shock/blob/main/docs/DATA_PROVENANCE.md">Data provenance →</a></p>
+      <div class="cite">
+        Bauer, Michael D., and Eric T. Swanson (2023). “A Reassessment of
+        Monetary Policy Surprises and High-Frequency Identification.”
+        <em>NBER Macroeconomics Annual</em> 37, 87–155. Updated series published
+        by the Federal Reserve Bank of San Francisco.
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Rate Shock — event study of Federal Reserve policy surprises across US
+      equity sectors, Treasuries and gold.<br>
+      Data: Federal Reserve Bank of San Francisco · federalreserve.gov · FRED ·
+      BLS · Yahoo Finance.</p>
+    <p><a href="https://github.com/Gariyuuu/rate-shock">GitHub</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

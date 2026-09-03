@@ -17,7 +17,7 @@ TABLES = ROOT / "results" / "tables"
 
 @pytest.fixture(scope="module")
 def report():
-    return (ROOT / "REPORT.md").read_text()
+    return (ROOT / "report" / "REPORT.md").read_text()
 
 
 @pytest.fixture(scope="module")

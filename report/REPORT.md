@@ -131,7 +131,7 @@ equity priors that failed (H1, H3, H4) are discussed in §5.3.
 
 ## 3. Data
 
-Full detail in [`docs/DATA_PROVENANCE.md`](docs/DATA_PROVENANCE.md).
+Full detail in [`docs/DATA_PROVENANCE.md`](../docs/DATA_PROVENANCE.md).
 
 Ten SPDR sector ETFs (XLF, XLK, XLU, XLRE, XLY, XLP, XLI, XLE, XLV, XLB),
 benchmarks SPY and QQQ, and cross-assets IEF, TLT, GLD. Inception dates bind:
@@ -201,7 +201,7 @@ this sample size.
 
 ### 5.1 The market and bond responses are well identified
 
-![Sector beta forest plot](results/figures/03_sector_beta_forest.png)
+![Sector beta forest plot](../results/figures/03_sector_beta_forest.png)
 
 | Asset | Return basis | β per +25bp | Robust SE | 95% CI | p | Bootstrap p | n | R² |
 |---|---|---|---|---|---|---|---|---|
@@ -275,7 +275,7 @@ consistent with essentially any hypothesis, and we draw no conclusion from it.
 
 ### 5.4 Window sensitivity
 
-![CAR curves](results/figures/04_car_curves.png)
+![CAR curves](../results/figures/04_car_curves.png)
 
 Betas by window (baseline sample, raw MPS):
 
@@ -324,7 +324,7 @@ predicted negative sign (−0.69) — though still insignificant with n = 60.
 
 ## 6. Inflation interactions
 
-![Regime betas](results/figures/05_regime_betas.png)
+![Regime betas](../results/figures/05_regime_betas.png)
 
 $$AR = \alpha + \beta_1 Shock + \beta_2 High + \beta_3 (Shock \times High) + \varepsilon$$
 
@@ -390,7 +390,7 @@ The clearest regime dependence in the data is in gold, not in equity sectors.
 
 ### 7.1 Correlation of event responses
 
-![Treasury vs equity scatter](results/figures/07_treasury_equity_scatter.png)
+![Treasury vs equity scatter](../results/figures/07_treasury_equity_scatter.png)
 
 Pairwise correlations of event responses ([0,+1], pairwise-complete, minimum 60
 shared events):
@@ -417,14 +417,14 @@ pattern in §6, tentative as that is.
 
 ### 7.2 Heatmap
 
-![Response heatmap](results/figures/06_response_heatmap.png)
+![Response heatmap](../results/figures/06_response_heatmap.png)
 
 ---
 
 ## 8. PCA and clustering (exploratory)
 
-![PCA](results/figures/08_pca_projection.png)
-![Dendrogram](results/figures/09_dendrogram.png)
+![PCA](../results/figures/08_pca_projection.png)
+![Dendrogram](../results/figures/09_dendrogram.png)
 
 PCA on the complete 164-event × 14-asset standardized response matrix (XLRE
 excluded — 72 events is too few for a balanced panel; this is recorded in
@@ -444,7 +444,9 @@ Hierarchical clustering (average linkage on correlation distance, 4 clusters):
 
 Does the data group economically similar rate-sensitive assets together?
 **Partly.** Cluster 4 is the interesting one: the two Treasury funds cluster
-with Consumer Discretionary rather than with Utilities or Real Estate. This is
+with Consumer Discretionary rather than with Utilities or Staples. (Real
+Estate, whose textbook duration story is the strongest of all, is absent from
+the clustering entirely — its 72-event history is too short to admit.) This is
 the same message as §7.1 and §5.3 — around FOMC announcements the sector that
 actually behaves like a duration asset is Discretionary, while Utilities
 behaves like a defensive. Our pre-registered "bond proxy" intuition for
@@ -456,7 +458,7 @@ This section is descriptive. We make no causal claim from it.
 
 ## 9. Robustness
 
-![Robustness](results/figures/10_robustness.png)
+![Robustness](../results/figures/10_robustness.png)
 
 **2,886 primary estimates and 465 interaction estimates are persisted** to
 `results/tables/robustness_all.csv` and `robustness_interaction.csv`. Nothing
@@ -470,18 +472,28 @@ surprise; scheduled-only; pre-2008; post-2008) × 4 windows × 2 shock measures 
 **What holds:**
 - IEF's sign and magnitude are essentially invariant (range −1.12 to −1.07
   across all eight samples).
-- TLT, GLD, XLK, QQQ, XLY, XLB, XLI never change sign across sample filters.
+- TLT, GLD, QQQ, XLB, XLI and XLV never change sign across any of the eight
+  sample filters.
 - The intraday and daily point estimates agree.
 
 **What does not:**
-- **XLU, XLE, XLF, XLP, XLRE, and SPY change sign across sample definitions.**
-  Utilities ranges from −2.44 to +1.96. These sectors are not reliably signed.
+- **Seven of the ten sectors change sign somewhere in the battery** — XLF, XLK,
+  XLU, XLRE, XLY, XLP and XLE — as does SPY. Utilities ranges from −2.44 to
+  +1.96. These sectors are not reliably signed.
+- The instability is concentrated in one filter. Across the six exclusion-type
+  samples (baseline, ex-emergency, ex-March-2020, ex-COVID, ex-largest-surprise,
+  scheduled-only) only XLU, XLE and XLRE flip. Adding the pre/post-2008
+  sub-period split flips XLK, XLY, XLP, XLF and SPY as well: in the post-2008
+  sub-sample every one of those betas turns positive. The zero-lower-bound era,
+  in which conventional target moves were rare and policy news arrived through
+  guidance, is a genuinely different regime, and the cross-section does not
+  survive being restricted to it.
 - XLRE is unstable under every perturbation and drops an entire sample filter
   (pre-2008) for lack of data.
 
-We flag this rather than bury it: **roughly half the sector betas are not
-sign-stable**, which reinforces §5.1 — this design does not resolve individual
-sector responses.
+We flag this rather than bury it: **seven of the ten sector betas are not
+sign-stable across the full battery**, which reinforces §5.1 — this design does
+not resolve individual sector responses.
 
 **Raw vs benchmark-adjusted.** Nine of ten sectors have a negative raw beta
 (−0.65 to −3.09; XLRE is the exception at +1.52 on 72 events), while
@@ -548,8 +560,8 @@ coherent, with Technology, Consumer Discretionary and Materials at the
 rate-sensitive end and Consumer Staples, Energy and Health Care at the
 defensive end, and a pooled test of cyclicals is significant (−0.67%,
 p = 0.029). But **no individual sector beta is statistically distinguishable
-from zero at the 5% level**, and about half are not even sign-stable across
-reasonable sample perturbations. Three of our six pre-registered directional
+from zero at the 5% level**, and seven of ten are not sign-stable across the
+full robustness battery. Three of our six pre-registered directional
 priors — Financials, Utilities and Real Estate — came out with the wrong sign.
 
 On the inflation-regime question, the pre-registered amplification hypothesis
