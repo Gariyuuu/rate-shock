@@ -53,6 +53,30 @@ OPTIONAL_ASSETS = {"BTC-USD": "Bitcoin (24/7, exploratory only)"}
 ALL_EQUITY = list(SECTORS) + list(BENCHMARKS)
 ALL_TICKERS = ALL_EQUITY + list(CROSS_ASSETS)
 
+
+def asset_class(ticker: str) -> str:
+    if ticker in SECTORS:
+        return "sector"
+    if ticker == "SPY":
+        return "benchmark"
+    if ticker in BENCHMARKS:
+        return "benchmark_other"
+    if ticker in CROSS_ASSETS:
+        return "cross_asset"
+    return "optional"
+
+
+def default_dep(ticker: str) -> str:
+    """Which return definition is meaningful for this asset.
+
+    Sectors (and QQQ) are benchmark-adjusted: the question is which sectors
+    move MORE than the market. Subtracting SPY from a Treasury or gold return
+    is not an abnormal return -- it just contaminates the bond response with
+    equity noise -- so cross-assets and SPY itself use the raw event return.
+    """
+    return "car_raw" if asset_class(ticker) in (
+        "benchmark", "cross_asset", "optional") else "car_adj"
+
 # --------------------------------------------------------------------------
 # Event windows, in TRADING days relative to the announcement day (day 0).
 # --------------------------------------------------------------------------

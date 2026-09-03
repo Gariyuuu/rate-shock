@@ -189,7 +189,19 @@ def target_rate_series(force: bool = False) -> pd.Series:
 # ---------------------------------------------------------------------------
 # Event database
 # ---------------------------------------------------------------------------
-def build_event_database(force: bool = False) -> pd.DataFrame:
+def build_event_database(force: bool = False, use_cache: bool = True) -> pd.DataFrame:
+    """Assemble the event database, caching the assembled result.
+
+    Rebuilding touches the network (surprises, Fed calendars, FRED), so the
+    finished table is cached under data/interim and reused unless ``force``.
+    """
+    cached = INTERIM / "fomc_events_full.csv"
+    if cached.exists() and use_cache and not force:
+        df = pd.read_csv(cached, parse_dates=["meeting_date",
+                                              "announcement_timestamp"])
+        df["official_release_title"] = df["official_release_title"].fillna("")
+        return df
+
     surp = load_surprises(force=force)
     target = target_rate_series(force=force)
     official = official_fed_dates()
@@ -207,14 +219,38 @@ def build_event_database(force: bool = False) -> pd.DataFrame:
     ev["scheduled"] = ev["unscheduled"] == 0
     ev["emergency"] = ev["unscheduled"] == 1
 
-    # Raw target change: level on the announcement day vs the preceding day.
-    def _lookup(ts, offset_days):
-        d = ts - pd.Timedelta(days=offset_days)
-        s = target.loc[:d]
-        return float(s.iloc[-1]) if len(s) else np.nan
+    # ------------------------------------------------------------------
+    # Raw target change.
+    #
+    # FRED records the target at its EFFECTIVE date, which for most of the
+    # sample is the business day AFTER the announcement (the Fed's
+    # implementation note takes effect the following day). Reading the level
+    # on the announcement date therefore misses the move entirely for meetings
+    # like 2022-03-16. We instead compare the level just before the
+    # announcement with the level a few days after, capped at the day before
+    # the NEXT announcement so that a subsequent meeting's move is never
+    # attributed to this one (this matters in March 2020, which had three
+    # announcements in 17 days).
+    #
+    # Convention: the corridor era (from 2008-12-16) is summarised by the
+    # MIDPOINT of the target range, so the 2008-12-16 move from a 1.00% target
+    # to a 0-0.25% range is recorded as -87.5bp rather than -75 or -100.
+    # ------------------------------------------------------------------
+    def _level_asof(d: pd.Timestamp) -> float:
+        s_ = target.loc[:d]
+        return float(s_.iloc[-1]) if len(s_) else np.nan
 
-    ev["target_after"] = ev["meeting_date"].map(lambda d: _lookup(d, 0))
-    ev["target_before"] = ev["meeting_date"].map(lambda d: _lookup(d, 1))
+    dates = ev["meeting_date"]
+    next_date = dates.shift(-1)
+    horizons = []
+    for d, nxt in zip(dates, next_date):
+        h = d + pd.Timedelta(days=5)
+        if pd.notna(nxt):
+            h = min(h, nxt - pd.Timedelta(days=1))
+        horizons.append(max(h, d))
+    ev["target_before"] = [_level_asof(d - pd.Timedelta(days=1)) for d in dates]
+    ev["target_after"] = [_level_asof(h) for h in horizons]
+    ev["target_after_asof"] = horizons
     ev["raw_change_bps"] = (ev["target_after"] - ev["target_before"]) * 100.0
 
     ev["surprise_source"] = np.where(
@@ -230,11 +266,13 @@ def build_event_database(force: bool = False) -> pd.DataFrame:
     ev["date_validated_official"] = ev["official_source"] != "unmatched"
 
     cols = ["meeting_id", "meeting_date", "announcement_timestamp", "scheduled",
-            "emergency", "target_before", "target_after", "raw_change_bps",
+            "emergency", "target_before", "target_after", "target_after_asof",
+            "raw_change_bps",
             "surprise_bps", "surprise_orth_bps", "surprise_source",
             "date_validated_official", "official_source", "official_release_title", "hf_tnote02_bps", "hf_tnote10_bps",
             "hf_tbond_bps"]
     ev = ev[cols].sort_values("meeting_date").reset_index(drop=True)
+    ev.to_csv(cached, index=False)
     return ev
 
 

@@ -30,12 +30,23 @@ def fetch(url: str, cache_name: str, *, binary: bool = False,
           force: bool = False, pause: float = 0.4) -> bytes | str:
     """GET ``url``, caching the raw payload at data/raw/<cache_name>."""
     path: Path = RAW / cache_name
+    miss = path.with_suffix(path.suffix + ".missing")
     if path.exists() and not force:
         return path.read_bytes() if binary else path.read_text(
             encoding="utf-8", errors="replace")
+    # Negative caching: probing for optional pages (e.g. the a/b/c suffixes of
+    # an unscheduled Fed press release) produces 404s. Without remembering
+    # them, every pipeline run re-issues those requests.
+    if miss.exists() and not force:
+        raise FileNotFoundError(f"cached 404 for {url}")
 
-    resp = session().get(url, timeout=60)
-    resp.raise_for_status()
+    try:
+        resp = session().get(url, timeout=60)
+        resp.raise_for_status()
+    except requests.HTTPError:
+        miss.parent.mkdir(parents=True, exist_ok=True)
+        miss.write_text("")
+        raise
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(resp.content)
     time.sleep(pause)  # be a good citizen
