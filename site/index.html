@@ -6,137 +6,114 @@
 <title>Rate Shock — How Fed policy surprises propagate across markets</title>
 <meta name="description" content="Event study of 215 FOMC announcements: how expectation-adjusted Federal Reserve policy surprises propagate across US equity sectors, Treasuries and gold.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231c4f8f'/><path d='M4 22h9l0-11h15' fill='none' stroke='%23fbfbfa' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#fcfcfa">
+<link rel="stylesheet" href="pub.css">
 <style>
-:root{
-  color-scheme: light;
-  --bg:#fbfbfa; --panel:#fff; --ink:#14140f; --ink2:#4a483f; --dim:#7c7a70;
-  --rule:#e2e0d9; --rule2:#eceae4; --accent:#1c4f8f; --neg:#a3352f; --pos:#1c5c3a;
-  --serif: "Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
-  --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
-  --mono: ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+/* rate-shock — study-local adapter on the W1 publication system
+   (.design-system/w1). Maps this study's class names onto the shared tokens. */
+
+.col{max-width:var(--measure)}
+
+/* Masthead key-figures strip. */
+.keys{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:1px;
+  background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-md);
+  overflow:hidden;margin:var(--s6) 0 0;padding:0;max-width:none
 }
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);
-  font-family:var(--serif);font-size:18px;line-height:1.62;
-  -webkit-font-smoothing:antialiased}
-.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
-.col{max-width:680px}
-p{margin:0 0 1.05em}
-a{color:var(--accent);text-decoration:none;border-bottom:1px solid #c3d2e6}
-a:hover{border-bottom-color:var(--accent)}
-h1,h2,h3{font-family:var(--serif);font-weight:600;letter-spacing:-.012em;margin:0}
-.eyebrow{font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--dim);margin:0 0 18px}
+/* More specific than the shared band rule, which targets `.keys > div`. */
+.keys > .key{
+  background:var(--bg);padding:var(--s4) var(--s5);border:0;margin:0;
+  transition:background var(--dur-2) var(--ease)
+}
+.keys > .key:hover{background:var(--panel)}
+.keys .key .v{
+  font-family:var(--mono);font-size:var(--fs-lg);color:var(--ink);font-weight:500;
+  letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums
+}
+.keys .key .k{
+  font-family:var(--sans);font-size:var(--fs-xs);letter-spacing:0;
+  text-transform:none;color:var(--muted);margin-top:var(--s2);line-height:1.4
+}
 
-/* header */
-header{border-bottom:1px solid var(--rule);padding:76px 0 54px;background:var(--panel)}
-h1{font-size:clamp(40px,6.4vw,64px);line-height:1.04;margin:0 0 20px}
-.lede{font-size:clamp(20px,2.5vw,24px);line-height:1.45;color:var(--ink2);
-  max-width:730px;margin:0 0 26px}
-.byline{font-family:var(--sans);font-size:13.5px;color:var(--dim);
-  display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
-.byline a{border:0;color:var(--ink2);font-weight:500}
-.byline a:hover{color:var(--accent)}
+.byline{
+  font-family:var(--sans);font-size:var(--fs-sm);color:var(--muted);
+  display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5);align-items:center;
+  font-style:normal;max-width:none;margin:0
+}
+.byline a{color:var(--body);font-weight:500}
+.links{display:flex;flex-wrap:wrap;gap:0;margin:var(--s5) 0 0}
 
-/* key figures strip */
-.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:0;
-  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
-  background:var(--panel);margin:0}
-.key{padding:24px 26px;border-right:1px solid var(--rule2)}
-.key:last-child{border-right:0}
-.key .v{font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.1;
-  font-variant-numeric:tabular-nums}
-.key .k{font-family:var(--sans);font-size:11.5px;letter-spacing:.07em;
-  text-transform:uppercase;color:var(--dim);margin-top:7px;line-height:1.35}
+/* Here ".sub" is a section standfirst, not the masthead's italic sub-title. */
+section .sub{
+  font-family:var(--sans);font-style:normal;font-size:var(--fs-sm);
+  color:var(--muted);margin:0 0 var(--s6);max-width:var(--measure)
+}
 
-section{padding:60px 0;border-bottom:1px solid var(--rule)}
-section:last-of-type{border-bottom:0}
-h2{font-size:clamp(26px,3.4vw,33px);margin:0 0 8px;line-height:1.18}
-.sub{font-family:var(--sans);font-size:14.5px;color:var(--dim);margin:0 0 30px}
-h3{font-size:19px;margin:34px 0 9px}
+.hero-fig{margin-top:var(--s3)}
 
-figure{margin:34px 0 0}
-figure img{width:100%;height:auto;display:block;border:1px solid var(--rule);
-  background:#fcfcfb}
-figcaption{font-family:var(--sans);font-size:13px;color:var(--dim);
-  margin-top:11px;line-height:1.5;max-width:760px}
-.hero-fig{margin-top:8px}
+td.num,th.num{text-align:right}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+th,td{text-align:left}
+thead th{border-bottom:1px solid var(--rule-strong)}
+.tk .sym{font-family:var(--mono);font-size:var(--fs-sm);font-weight:500;color:var(--ink)}
+.tk .nm{color:var(--muted);font-size:var(--fs-sm)}
+.strong{font-weight:600;color:var(--ink)}
+tr.sig td{background:var(--accent-soft)}
+tr.sig .strong{color:var(--accent-ink)}
+.tnote{font-size:var(--fs-xs);color:var(--muted);margin-top:var(--s3);line-height:1.55}
+.scrollhint{
+  display:none;font-family:var(--mono);font-size:var(--fs-micro);color:var(--muted);
+  letter-spacing:var(--tr-wide);text-transform:uppercase;margin:var(--s5) 0 calc(-1 * var(--s3))
+}
 
-table{width:100%;border-collapse:collapse;margin:26px 0 0;
-  font-family:var(--sans);font-size:14px;font-variant-numeric:tabular-nums}
-th{text-align:left;font-weight:600;font-size:11.5px;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--dim);padding:0 12px 9px 0;
-  border-bottom:1px solid var(--ink)}
-td{padding:9px 12px 9px 0;border-bottom:1px solid var(--rule2);vertical-align:baseline}
-td.num,th.num{text-align:right;padding-right:0}
-th.num{padding-right:0}
-.tk .sym{font-family:var(--mono);font-size:13px;font-weight:600}
-.tk .nm{color:var(--dim);font-size:13px}
-.strong{font-weight:600}
-.dim{color:var(--dim)}
-tr.sig td{background:#f4f7fb}
-tr.sig .strong{color:var(--accent)}
-.tnote{font-family:var(--sans);font-size:12.5px;color:var(--dim);margin-top:12px;line-height:1.55}
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.scrollhint{display:none;font-family:var(--sans);font-size:12px;color:var(--dim);
-  margin:20px 0 -14px;letter-spacing:.04em}
+.callout{
+  border:0;border-left:2px solid var(--ink);background:none;border-radius:0;
+  padding:.15rem 0 .15rem var(--s5);margin:var(--s6) 0;max-width:var(--measure)
+}
+.callout .lbl{
+  display:block;font-family:var(--mono);font-size:var(--fs-micro);font-weight:500;
+  letter-spacing:var(--tr-wide);text-transform:uppercase;color:var(--muted);
+  margin-bottom:var(--s3)
+}
 
-.callout{border-left:2px solid var(--ink);padding:4px 0 4px 22px;margin:30px 0;
-  max-width:690px}
-.callout p:last-child{margin-bottom:0}
-.callout .lbl{font-family:var(--sans);font-size:11.5px;font-weight:600;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
-  display:block;margin-bottom:7px}
-
-ul{margin:0 0 1.05em;padding-left:1.15em;max-width:690px}
-li{margin-bottom:.5em}
-li::marker{color:var(--dim)}
-
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:34px 46px;margin-top:30px}
+.grid2{
+  display:grid;grid-template-columns:1fr 1fr;gap:var(--s6) var(--s7);
+  margin-top:var(--s6);max-width:var(--measure-wide)
+}
 .finding{max-width:none}
 .finding h3{margin-top:0}
-.finding p{font-size:16.5px;line-height:1.55;margin-bottom:0}
+.finding p{font-size:var(--fs-sm);line-height:1.6;margin-bottom:0;max-width:none}
 
-code,kbd{font-family:var(--mono);font-size:.88em;background:#f1efe9;
-  padding:1.5px 5px;border-radius:3px}
-pre{background:#14140f;color:#eceae4;padding:20px 22px;border-radius:5px;
-  overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.65;
-  max-width:760px}
+/* The one dark surface in the publication: a terminal transcript, which reads
+   as a terminal rather than as prose. */
+pre{
+  background:#1b1917;color:#eceae4;border:0;border-radius:var(--r-md);
+  padding:var(--s5);font-size:var(--fs-sm)
+}
 pre code{background:0;padding:0;color:inherit;font-size:inherit}
 
-footer{padding:54px 0 76px;font-family:var(--sans);font-size:14px;color:var(--dim);
-  background:var(--panel);border-top:1px solid var(--rule)}
-footer a{color:var(--ink2)}
-.cite{font-size:14px;color:var(--dim);border-left:2px solid var(--rule);
-  padding-left:18px;margin-top:22px;max-width:690px;line-height:1.55}
-
-@media (max-width:880px){
-  .keys{grid-template-columns:1fr 1fr}
-  .key{border-bottom:1px solid var(--rule2)}
-  .key:nth-child(2){border-right:0}
-  .grid2{grid-template-columns:1fr;gap:26px}
+.cite{
+  font-size:var(--fs-sm);color:var(--muted);border-left:2px solid var(--rule);
+  padding-left:var(--s5);margin-top:var(--s5);max-width:var(--measure);line-height:1.55
 }
+
+@media (max-width:880px){.grid2{grid-template-columns:1fr;gap:var(--s6)}}
 @media (max-width:600px){
-  body{font-size:17px}
-  .wrap{padding:0 20px}
-  header{padding:52px 0 40px}
-  section{padding:44px 0}
-  .key{padding:18px 20px}
-  .key .v{font-size:25px}
-  table{font-size:13px}
-  td,th{padding-right:8px;white-space:nowrap}
+  td,th{padding-right:.5rem;white-space:nowrap}
   .tk{white-space:normal}
   /* Let the table keep its natural width and scroll, rather than squeezing
      numeric cells onto two lines and clipping the right-hand columns. */
-  .scroll table{min-width:600px}
+  .scroll table{min-width:38rem}
   .scrollhint{display:block}
 }
 </style>
 </head>
 <body>
 
-<header>
+<header class="mast">
   <div class="wrap">
     <p class="eyebrow">Empirical finance · Event study</p>
     <h1>Rate Shock</h1>
@@ -144,13 +121,13 @@ footer a{color:var(--ink2)}
       surprises the market?</p>
     <p class="byline">
       <span>215 FOMC announcements · 1998-12-22 to 2023-12-13</span>
-      <a href="https://github.com/Gariyuuu/rate-shock">Source &amp; data →</a>
-      <a href="https://github.com/Gariyuuu/rate-shock/blob/main/report/REPORT.md">Full report →</a>
     </p>
-  </div>
-</header>
+    <p class="links">
+      <a class="btn" href="https://github.com/Gariyuuu/rate-shock">Source &amp; data</a>
+      <a class="btn ghost" href="https://github.com/Gariyuuu/rate-shock/blob/main/report/REPORT.md">Full report</a>
+    </p>
 
-<div class="keys">
+    <div class="keys">
   <div class="key"><div class="v">−1.77%</div>
     <div class="k">S&amp;P 500 response<br>per +25bp hawkish surprise</div></div>
   <div class="key"><div class="v">−1.07%</div>
@@ -159,7 +136,9 @@ footer a{color:var(--ink2)}
     <div class="k">Equity sectors significant<br>at the 5% level</div></div>
   <div class="key"><div class="v">0.47</div>
     <div class="k">Correlation between rate change<br>and actual surprise</div></div>
-</div>
+    </div>
+  </div>
+</header>
 
 <main>
 
@@ -647,5 +626,6 @@ python3.11 -m venv .venv
   </div>
 </footer>
 
+<script src="pub.js" defer></script>
 </body>
 </html>
